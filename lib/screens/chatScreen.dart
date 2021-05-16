@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_chat/widgets/chats/MessageInput.dart';
-import 'package:flutter_chat/widgets/chats/Messages.dart';
+import 'package:flutter_chat/widgets/chats/messageInput.dart';
+import 'package:flutter_chat/widgets/chats/messages.dart';
 
 class ChatScreen extends StatefulWidget {
   @override
@@ -17,26 +17,24 @@ class _ChatScreenState extends State<ChatScreen> {
   var user;
 
   @override
-  void initState() {
-    super.initState();
-    Future.delayed(Duration.zero, () async {
-      Firebase.initializeApp();
-      user = FirebaseAuth.instance.currentUser;
-      userData = await FirebaseFirestore.instance
-          .collection("user")
-          .doc(user.uid)
-          .get();
-    });
+  void didChangeDependencies() async {
+    super.didChangeDependencies();
+
+    Firebase.initializeApp();
+    user = FirebaseAuth.instance.currentUser;
+    // userData =
+    //     await FirebaseFirestore.instance.collection("user").doc(user.uid).get();
   }
 
   void onsendMessage(newMessage) async {
-    // final userData =
-    //     await FirebaseFirestore.instance.collection("user").doc(user.uid).get();
+    final userData =
+        await FirebaseFirestore.instance.collection("user").doc(user.uid).get();
     FirebaseFirestore.instance.collection("chat").add({
       "message": newMessage,
       "createdAt": Timestamp.now(),
       "userId": user.uid,
-      "userName": userData.data()["name"]
+      "userName": userData.data()["name"],
+      "proPic": userData.data()["proPic"],
     });
     _messageController.clear();
   }
@@ -46,6 +44,7 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text("Chat Screen"),
+        backgroundColor: Colors.purple,
         actions: [
           PopupMenuButton(
             onSelected: (value) {

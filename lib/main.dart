@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat/screens/authScreen.dart';
 import 'package:flutter_chat/screens/chatScreen.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +20,29 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool isLoading = false;
-  void _submitAuthForm(email, userName, password, isLogin, ctx) async {
+
+  @override
+  void didChangeDependencies() async {
+    super.didChangeDependencies();
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    // var token = await messaging.getToken();
+    // print("Token$token");
+
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      announcement: false,
+      badge: true,
+      carPlay: false,
+      criticalAlert: false,
+      provisional: false,
+      sound: true,
+    );
+
+    print('User granted permission: ${settings.authorizationStatus}');
+  }
+
+  void _submitAuthForm(email, userName, password, isLogin, proPic, ctx) async {
     try {
       setState(() {
         isLoading = true;
@@ -30,11 +54,26 @@ class _MyAppState extends State<MyApp> {
             email: email, password: password);
       } else {
         userCredential = await auth.createUserWithEmailAndPassword(
-            email: email, password: password);
+          email: email,
+          password: password,
+        );
+
+        final imgRef = FirebaseStorage.instance
+            .ref()
+            .child("userImage")
+            .child(userCredential.user.uid + "jpg");
+
+        await imgRef.putFile(proPic);
+        final picUrl = await imgRef.getDownloadURL();
+
         FirebaseFirestore.instance
             .collection("user")
             .doc(userCredential.user.uid)
-            .set({"email": userCredential.user.email, "name": userName});
+            .set({
+          "email": userCredential.user.email,
+          "name": userName,
+          "proPic": picUrl
+        });
       }
     } on FirebaseAuthException catch (e) {
       String msg = "";

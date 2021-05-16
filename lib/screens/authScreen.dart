@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_chat/widgets/pickers/userImagePicker.dart';
 
 class AuthScreen extends StatefulWidget {
   final bool isLoading;
@@ -7,11 +10,10 @@ class AuthScreen extends StatefulWidget {
     String password,
     String userName,
     bool isLogin,
+    File proPic,
     BuildContext ctx,
   ) submitFn;
-
   AuthScreen(this.submitFn, this.isLoading);
-
   @override
   _AuthScreenState createState() => _AuthScreenState();
 }
@@ -19,19 +21,28 @@ class AuthScreen extends StatefulWidget {
 class _AuthScreenState extends State<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   bool isLogin = true;
-
-  String _email = "";
-  String _password = "";
-  String _userName = "";
+  String email = "";
+  String password = "";
+  String userName = "";
+  File proPic;
 
   void _tryLogin() {
     bool isValid = _formKey.currentState.validate();
     FocusScope.of(context).unfocus();
+    if (proPic == null && !isLogin) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Pleae pick a image")));
+      return;
+    }
     if (isValid) {
       _formKey.currentState.save();
-      widget.submitFn(
-          _email.trim(), _userName.trim(), _password.trim(), isLogin, context);
+      widget.submitFn(email.trim(), userName.trim(), password.trim(), isLogin,
+          proPic, context);
     }
+  }
+
+  void _pickedImage(image) {
+    proPic = image;
   }
 
   @override
@@ -47,6 +58,7 @@ class _AuthScreenState extends State<AuthScreen> {
               key: _formKey,
               child: Column(
                 children: [
+                  if (!isLogin) UserImagePicker(_pickedImage),
                   TextFormField(
                     key: ValueKey("email"),
                     initialValue: "aks@gmail.com",
@@ -59,7 +71,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       }
                       return null;
                     },
-                    onSaved: (newValue) => _email = newValue,
+                    onSaved: (newValue) => email = newValue,
                   ),
                   if (!isLogin)
                     TextFormField(
@@ -72,7 +84,7 @@ class _AuthScreenState extends State<AuthScreen> {
                         }
                         return null;
                       },
-                      onSaved: (newValue) => _userName = newValue,
+                      onSaved: (newValue) => userName = newValue,
                     ),
                   TextFormField(
                     obscureText: true,
@@ -85,7 +97,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       }
                       return null;
                     },
-                    onSaved: (newValue) => _password = newValue,
+                    onSaved: (newValue) => password = newValue,
                   ),
                   SizedBox(
                     height: 20,

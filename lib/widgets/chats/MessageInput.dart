@@ -15,7 +15,10 @@ class _MessageInputState extends State<MessageInput> {
 
   void sendMessage() {
     widget.sendMessage(_newMessage);
-    _messageController.clear();
+    setState(() {
+      _messageController.clear();
+      _newMessage = "";
+    });
   }
 
   @override
